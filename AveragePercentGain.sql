@@ -1,0 +1,81 @@
+USE stockdb
+SELECT
+	MAXROW.strTick,
+	MAXROW.dtDate AS MAXDATE,
+	MAXROW.decClose AS MAXCLOSE,
+	MAXROW2.dtDate AS MAX2DATE,
+	MAXROW2.decClose AS MAX2CLOSE,
+	MINROW.dtDate AS MINDATE,
+	MINROW.decClose AS MINCLOSE,
+	CURGROUP.dtDate AS CURRDATE,
+	CURGROUP.decClose AS CURRCLOSE,
+	CURGROUP.decClose/MAXROW.decClose AS PCT_CHG_YOY,
+	ROWCT.NUMDAYS-252 AS NUMDAYS,
+	(MAXROW2.decClose/MINROW.decClose) AS PCT_CHG,
+	CAST((1/(ROWCT.NUMDAYS-((252.0*2)-1)))AS decimal(10,9)) AS EXPONENT,
+	CAST(POWER((MAXROW2.decClose/MINROW.decClose),CAST((1/(ROWCT.NUMDAYS-((252.0*2)-1)))AS decimal(10,9))) AS decimal(10,9)) AS DAILY_PCT_GAIN,
+	CAST(POWER((MAXROW.decClose/MINROW.decClose),CAST((1/(ROWCT.NUMDAYS-((252.0)-1)))AS decimal(10,9))) AS decimal(10,9)) AS CURR_DAILY_PCT_GAIN
+
+FROM
+	(SELECT
+		ROW_NUMBER() OVER (PARTITION BY strTick ORDER BY dtDate DESC) AS ROWDATE,
+		*
+	FROM
+		snp500_test
+	) MAXROW
+JOIN
+		(SELECT
+		ROW_NUMBER() OVER (PARTITION BY strTick ORDER BY dtDate DESC) AS ROWDATE,
+		*
+	FROM
+		snp500_test
+	) MAXROW2 ON MAXROW.strTick = MAXROW2.strTick
+JOIN
+	(SELECT
+		ROW_NUMBER() OVER (PARTITION BY strTick ORDER BY dtDate ASC) AS ROWDATE,
+		*
+	FROM
+		snp500_test
+	) MINROW ON MINROW.strTick = MAXROW.strTick
+JOIN
+	(
+	SELECT
+		strTick,
+		COUNT(*) AS NUMDAYS
+	FROM
+		snp500_test
+	GROUP BY
+		strTick
+	) ROWCT ON ROWCT.strTick = MINROW.strTick
+				AND ROWCT.strTick = MAXROW.strTick
+JOIN
+	(
+	SELECT
+		dtDate,
+		strTick,
+		decClose
+	FROM
+		snp500_test snp
+	JOIN
+		(
+		SELECT
+			MAX(dtDate) AS MAXDATE,
+			strTick as tick
+		FROM
+			snp500_test
+		GROUP BY
+			strTick
+		) FST ON FST.MAXDATE = snp.dtDate
+				AND FST.tick = snp.strTick
+
+	) CURGROUP ON CURGROUP.strTick = MINROW.strTick
+				AND CURGROUP.strTick = MAXROW.strTick
+				AND CURGROUP.strTick = ROWCT.strTick
+JOIN
+	CompanyList CL ON CL.strTick = MINROW.strTick
+WHERE
+	MAXROW.ROWDATE = 252
+	AND MAXROW2.ROWDATE = (252*2)
+	AND MINROW.ROWDATE = 1
+ORDER BY
+	CAST(POWER((MAXROW.decClose/MINROW.decClose),CAST((1/(ROWCT.NUMDAYS-253.0))AS decimal(10,9))) AS decimal(10,9)) DESC

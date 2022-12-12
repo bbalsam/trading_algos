@@ -1,0 +1,30 @@
+input OpenTime = 0930;
+input CloseTime = 1550;
+input DurationHours = 1;
+input tradeNum = 5;
+input stdevB = 2;
+input stdevS = 2;
+
+def stdevBuy = 1+(0.00312-(stdevB*0.0110));
+def stdevSell = 1-(-0.00280-(stdevB*0.01196));;
+
+#def durationSec = DurationHours * 60 * 60;
+def secondsRemained = SecondsTillTime(CloseTime);
+
+def OpenTimeTrigger = if SecondsTillTime(OpenTime) == 0 then 1 else 0;
+def CloseTimeTrigger = if SecondsTillTime(CloseTime) == 0 then 1 else 0;
+
+#OPEN
+
+def OpenBuy = if close[1] < open and OpenTimeTrigger == 1 then 1 else 0;
+def CloseBuy = if (CloseTimeTrigger == 1) then 1 else 0;
+
+AddOrder(OrderType.BUY_TO_OPEN, OpenBuy, tradeSize = tradeNum, tickcolor = GetColor(1), arrowcolor = GetColor(1), name = "BUY @ " + astext(EntryPrice()));
+AddOrder(OrderType.SELL_TO_CLOSE, CloseBuy, tradeSize = tradeNum, tickcolor = GetColor(1), arrowcolor = GetColor(1), name = "CLOSE @ " + astext(EntryPrice()));
+#SELL
+
+def OpenSell = if close[1] > open and OpenTimeTrigger == 1 then 1 else 0;
+def CloseSell = if CloseTimeTrigger == 1 then 1 else 0;
+
+AddOrder(OrderType.SELL_TO_OPEN, OpenSell, tradeSize = tradeNum, tickcolor = GetColor(1), arrowcolor = GetColor(1), name = "SELL @ " + astext(EntryPrice()));
+AddOrder(OrderType.BUY_TO_CLOSE, CloseSell, tradeSize = tradeNum, tickcolor = GetColor(1), arrowcolor = GetColor(1), name = "CLOSE @ " + astext(EntryPrice()));

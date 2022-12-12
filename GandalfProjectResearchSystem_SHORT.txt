@@ -1,0 +1,38 @@
+#
+# TD Ameritrade IP Company, Inc. (c) 2020
+#
+#===============================================================================
+#Defaults:
+#input exitLength = 8;
+#input exitGainLength = 6;
+#===============================================================================
+
+input exitLength = 2;
+input exitGainLength = 3;
+
+def averagePrice = ohlc4;
+def medianPrice = hl2;
+def medianBodyPrice = MidBodyVal();
+
+def ShortEntryGandaldfPattern = (averagePrice[1] > medianPrice[1] and
+    medianPrice[2] >= averagePrice[1] and
+    medianBodyPrice[2] >= averagePrice[3]) or
+    (averagePrice[1] < medianPrice[3] and
+    medianBodyPrice > medianPrice[2] and
+    medianBodyPrice[1] > medianBodyPrice[2]);
+
+def ShortExitGandalfPattern = (averagePrice[1] < medianBodyPrice[1] and
+    medianPrice[2] == medianBodyPrice[3] and
+    medianBodyPrice[1] <= medianBodyPrice[4]) or
+    (averagePrice[2] < medianBodyPrice and
+    medianPrice[4] <= averagePrice[3] and
+    medianBodyPrice[1] <= averagePrice[1]);
+
+def entryPrice = EntryPrice();
+def priceChangeSinceEntry = close - entryPrice;
+def afterEntryCount = if IsNaN(entryPrice[1]) and !IsNaN(entryPrice) then 1 else if !IsNaN(entryPrice) then afterEntryCount[1] + 1 else Double.NaN;
+
+AddOrder(OrderType.SELL_TO_OPEN, ShortEntryGandaldfPattern, tickcolor = GetColor(1), arrowcolor = GetColor(1), name = "GandalfSE");
+AddOrder(OrderType.BUY_TO_CLOSE, afterEntryCount > exitLength, tickcolor = GetColor(2), arrowcolor = GetColor(2), name = "GandalfTimeSX"); # check name
+AddOrder(OrderType.BUY_TO_CLOSE, ShortExitGandalfPattern and priceChangeSinceEntry > 0, tickcolor = GetColor(3), arrowcolor = GetColor(3), name = "GandalfSX");
+AddOrder(OrderType.BUY_TO_CLOSE, afterEntryCount > exitGainLength and priceChangeSinceEntry > 0, tickcolor = GetColor(4), arrowcolor = GetColor(4), name = "GandalfTimeGainSX");
