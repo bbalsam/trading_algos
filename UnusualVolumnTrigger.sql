@@ -1,4 +1,4 @@
-USE stockdb;
+USE stock;
 WITH SubQuery
 AS
 (
@@ -25,7 +25,7 @@ SELECT
 	MAX(decHigh) OVER (PARTITION BY strtick ORDER BY dtDate ROWS BETWEEN  CURRENT ROW AND 21 FOLLOWING) AS OneMonthMax,
 	MIN(decLow) OVER (PARTITION BY strtick ORDER BY dtDate ROWS BETWEEN  CURRENT ROW AND 21 FOLLOWING) AS OneMonthMin
 FROM
-	snp500
+	stocks
 WHERE
 	dtDate > '12/01/2011'
 	and strTick IN('^GSPC','A','AAL','AAP','AAPL','ABBV','ABC','ABMD','ABNB','ABT','ACB','ACCD','ACES','ACIC'
