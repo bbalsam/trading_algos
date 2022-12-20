@@ -10,60 +10,50 @@ DECLARE @startdate DATE
 DECLARE @endpulldate DATE
 DECLARE @enddate DATE
 
-SET @inputdate = '01/01/2020'
+SET @inputdate = '12/19/2021'
 
-SET @pulldate = (SELECT TOP 1
-					dtDate
+/*SET @inputdate = (SELECT MAX(dtDate)
+				FROM
+					STOCKS
+				WHERE
+					strTick = 'SPY')*/
+
+SET @pulldate = (SELECT MAX(dtDate)
 				FROM
 					STOCKS
 				WHERE
 					strTick = 'SPY'
-					AND dtDate <@inputdate
-				ORDER BY
-					dtDate DESC)
+					AND dtDate <@inputdate)
 
-SET @startdate = (SELECT TOP 1
-					dtDate
+SET @startdate = (SELECT MAX(dtDate)
 				FROM
 					STOCKS
 				WHERE
 					strTick = 'SPY'
-					AND dtDate >=@inputdate
-				ORDER BY
-					dtDate)
+					AND dtDate >=@inputdate)
 
-SET @yearpriordate = (SELECT TOP 1
-					dtDate
+SET @yearpriordate = (SELECT MIN(dtDate)
 				FROM
 					STOCKS
 				WHERE
 					strTick = 'SPY'
-					AND dtDate >=DATEADD(mm,-12,@pulldate)
-				ORDER BY
-					dtDate)
+					AND dtDate >=DATEADD(mm,-12,@pulldate))
 
-SET @halfyearpriordate = (SELECT TOP 1
-					dtDate
+SET @halfyearpriordate = (SELECT MIN(dtDate)
 				FROM
 					STOCKS
 				WHERE
 					strTick = 'SPY'
-					AND dtDate >=DATEADD(mm,-6,@pulldate)
-				ORDER BY
-					dtDate)
+					AND dtDate >=DATEADD(mm,-6,@pulldate))
 
-SET @quarterpriordate = (SELECT TOP 1
-					dtDate
+SET @quarterpriordate = (SELECT MIN(dtDate)
 				FROM
 					STOCKS
 				WHERE
 					strTick = 'SPY'
-					AND dtDate >=DATEADD(mm,-3,@pulldate)
-				ORDER BY
-					dtDate)
+					AND dtDate >=DATEADD(mm,-3,@pulldate))
 
-SET @enddate = (SELECT TOP 1
-					dtDate
+SET @enddate = (SELECT MIN(dtDate)
 				FROM
 					STOCKS
 				WHERE
@@ -71,8 +61,7 @@ SET @enddate = (SELECT TOP 1
 					AND dtDate >=DATEADD(mm,1,@inputdate)
 					)
 					
-SET @endpulldate = (SELECT TOP 1
-					dtDate
+SET @endpulldate = (SELECT MIN(dtDate)
 				FROM
 					STOCKS
 				WHERE
